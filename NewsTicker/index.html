@@ -355,8 +355,9 @@
                     appContainer.classList.add('full-screen-hidden');
                     marqueeContainer.classList.add('full-screen');
                     exitFullScreenBtn.style.display = 'block'; // 顯示退出按鈕
-                    // 調整文字大小以填滿螢幕
-                    marqueeText.style.fontSize = `${Math.min(window.innerWidth / 10, window.innerHeight / 3)}px`;
+                    // 根據滑桿數值設定文字大小，使其在全螢幕時保持一致
+                    const size = sizeSlider.value;
+                    marqueeText.style.fontSize = `${size * 5}vh`; 
                 } else {
                     // 退出全螢幕模式
                     appContainer.classList.remove('full-screen-hidden');
