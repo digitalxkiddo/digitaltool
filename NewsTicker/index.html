@@ -52,7 +52,7 @@
             }
         }
         .input-text {
-            height: 200px;
+            height: 100px;
             width: 100%;
             padding: 12px;
             border-radius: 8px;
@@ -193,6 +193,8 @@
             <label for="textInput" class="text-lg font-semibold text-gray-700">輸入要顯示的文字：</label>
             <div class="flex items-start gap-2">
                 <textarea id="textInput" placeholder="在此輸入文字..." class="input-text flex-grow"></textarea>
+            </div>
+            <div class="flex items-start gap-2">
                 <button id="speechInputBtn" class="speech-button flex-shrink-0">
                     <i class="fas fa-microphone"></i> 語音輸入
                 </button>
@@ -267,7 +269,7 @@
                 const recognition = new webkitSpeechRecognition();
                 recognition.continuous = false; // 語音辨識一次後就停止
                 recognition.lang = 'zh-TW'; // 設置語言為繁體中文
-                recognition.interimResults = false; // 不顯示中途結果
+                recognition.interimResults = true; // 不顯示中途結果
 
                 speechInputBtn.addEventListener('click', () => {
                     speechInputBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 請說話...';
@@ -378,3 +380,4 @@
     </script>
 </body>
 </html>
+
