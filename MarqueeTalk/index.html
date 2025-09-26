@@ -204,7 +204,7 @@
             <!-- 速度調整 -->
             <div class="slider-container">
                 <label for="speedSlider" class="text-lg font-semibold text-gray-700">速度:</label>
-                <input type="range" id="speedSlider" min="5" max="40" value="15" class="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer">
+                <input type="range" id="speedSlider" min="5" max="40" value="20" class="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer">
                 <div class="slider-label">
                     <span>慢</span>
                     <span>快</span>
@@ -305,8 +305,8 @@
                 if (content === '') {
                     marqueeText.textContent = '請輸入文字';
                 } else {
-                    // 為了連續顯示，將文字重複三次並加入間隔
-                    marqueeText.textContent = content + '　' + content + '　' + content;
+                    // 為了連續顯示，將文字重複兩次並加入間隔
+                    marqueeText.textContent = content + '　' + content;
                 }
 
                 // 根據全螢幕狀態來設定文字大小
@@ -317,32 +317,34 @@
                     marqueeText.style.fontSize = `${size}rem`; // 正常模式下使用rem單位
                 }
 
-                // 重新計算並設定動畫速度
-                updateMarqueeAnimation();
-            };
+                // 使用 setTimeout 確保瀏覽器完成尺寸計算後再執行動畫重啟
+                setTimeout(() => {
+                    // 移除現有的動畫屬性
+                    marqueeText.style.animation = 'none';
+                    
+                    // 顯式地將文字位置設定到最右側，確保立即重置
+                    if (document.fullscreenElement) {
+                        marqueeText.style.transform = 'translateX(80%)';
+                    } else {
+                        marqueeText.style.transform = 'translateX(100%)';
+                    }
 
-            // 根據文字寬度和滑桿值動態調整動畫速度
-            const updateMarqueeAnimation = () => {
-                // 移除現有的動畫屬性
-                marqueeText.style.animation = 'none';
-                
-                // 顯式地將文字位置設定到最右側，確保立即重置
-                marqueeText.style.transform = 'translateX(100%)';
-
-                // 強制瀏覽器重繪，以確保位置已經更新
-                marqueeText.offsetHeight;
-                
-                // 獲取跑馬燈文字的實際寬度
-                const textWidth = marqueeText.scrollWidth;
-                const speed = speedSlider.value;
-                const containerWidth = marqueeContainer.offsetWidth;
-                // 計算動畫總行程，為容器寬度加上文字寬度
-                const totalDistance = containerWidth + textWidth;
-                // 根據滑桿值動態計算動畫時間
-                const animationDuration = totalDistance / (speed * 10);
-                
-                // 應用新的動畫屬性，確保從頭播放
-                marqueeText.style.animation = `marquee-animation ${animationDuration}s linear infinite`;
+                    // 強制瀏覽器重繪，以確保位置已經更新
+                    marqueeText.offsetHeight;
+                    
+                    // 獲取跑馬燈文字的實際寬度
+                    const textWidth = marqueeText.scrollWidth;
+                    const speed = speedSlider.value;
+                    const containerWidth = marqueeContainer.offsetWidth;
+                    // 計算動畫總行程，為容器寬度加上文字寬度
+                    const totalDistance = containerWidth + textWidth;
+                    // 根據全螢幕狀態調整速度，確保體感速度一致
+                    const speedMultiplier = document.fullscreenElement ? (speed * 10 * 1.5) : (speed * 10);
+                    const animationDuration = totalDistance / speedMultiplier;
+                    
+                    // 應用新的動畫屬性，確保從頭播放
+                    marqueeText.style.animation = `marquee-animation ${animationDuration}s linear infinite`;
+                }, 0);
             };
 
             // 處理文字輸入
@@ -384,12 +386,12 @@
                     // 進入全螢幕模式
                     appContainer.classList.add('full-screen-hidden');
                     marqueeContainer.classList.add('full-screen');
-                    exitFullScreenBtn.style.display = 'block'; // 顯示退出按鈕
+                    exitFullScreenBtn.style.display = 'block'; // 直接顯示退出按鈕
                 } else {
                     // 退出全螢幕模式
                     appContainer.classList.remove('full-screen-hidden');
                     marqueeContainer.classList.remove('full-screen');
-                    exitFullScreenBtn.style.display = 'none'; // 隱藏退出按鈕
+                    exitFullScreenBtn.style.display = 'none'; // 直接隱藏退出按鈕
                 }
                 // 在全螢幕狀態改變後立即更新跑馬燈，確保無延遲
                 updateMarquee();
