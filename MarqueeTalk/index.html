@@ -218,7 +218,7 @@
             <!-- 速度調整 -->
             <div class="slider-container">
                 <label for="speedSlider" class="text-lg font-semibold text-gray-700">速度:</label>
-                <input type="range" id="speedSlider" min="5" max="40" value="10" class="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer">
+                <input type="range" id="speedSlider" min="5" max="40" value="20" class="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer">
                 <div class="slider-label">
                     <span>慢</span>
                     <span>快</span>
@@ -331,21 +331,20 @@
 
                 setTimeout(() => {
                     marqueeText.style.animation = 'none';
-                    
-                    if (document.fullscreenElement) {
-                        marqueeText.style.transform = 'translateX(100%)';
-                    } else {
-                        marqueeText.style.transform = 'translateX(100%)';
-                    }
-
+                    marqueeText.style.transform = 'translateX(100%)';
                     marqueeText.offsetHeight;
                     
-                    const textWidth = marqueeText.scrollWidth;
                     const speed = speedSlider.value;
-                    const containerWidth = marqueeContainer.offsetWidth;
-                    const totalDistance = containerWidth + textWidth;
-                    const speedMultiplier = document.fullscreenElement ? (speed * 10 * 1.5) : (speed * 10);
-                    const animationDuration = totalDistance / speedMultiplier;
+                    
+                    // 固定的視覺速度：每秒移動多少個螢幕寬度的百分比
+                    // 這樣確保在不同寬度下，視覺速度感受相同
+                    const screenPercentPerSecond = speed * 0.8; // 每秒移動螢幕寬度的百分比
+                    
+                    // 文字從右邊100%移動到左邊-100%，總共移動200%的螢幕寬度
+                    const totalScreenPercent = 200;
+                    
+                    // 根據固定的視覺速度計算動畫時間
+                    const animationDuration = totalScreenPercent / screenPercentPerSecond;
                     
                     marqueeText.style.animation = `marquee-animation ${animationDuration}s linear infinite`;
                 }, 50);
@@ -424,5 +423,3 @@
     </script>
 </body>
 </html>
-
-
