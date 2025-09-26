@@ -29,6 +29,7 @@
             display: flex;
             flex-direction: column;
             gap: 2rem;
+            transition: transform 0.3s ease, opacity 0.3s ease;
         }
         .container.full-screen-hidden {
             transform: scale(0);
@@ -100,17 +101,19 @@
             justify-content: center;
             align-items: center;
             position: relative;
+            transition: all 0.3s ease;
         }
         .marquee-container.full-screen {
             position: fixed;
             top: 0;
             left: 0;
-            width: 100vw;
-            height: 100vh;
+            width: 100vw !important;
+            height: 100vh !important;
+            border: none;
             border-radius: 0;
             background-color: #1a202c;
-            z-index: 999;
-            margin-top: 0;
+            z-index: 998;
+            margin: 0;
         }
         .marquee {
             white-space: nowrap;
@@ -122,6 +125,7 @@
             font-weight: bold;
             line-height: 200px;
             color: #3182ce;
+            transition: font-size 0.3s ease;
         }
         @keyframes marquee-animation {
             from { transform: translateX(100%); }
@@ -133,6 +137,8 @@
             border: none;
             cursor: pointer;
             transition: background-color 0.3s;
+            padding: 12px;
+            border-radius: 8px;
         }
         .full-screen-btn:hover {
             background-color: #319795;
@@ -154,31 +160,39 @@
             background-color: #a0aec0;
             cursor: not-allowed;
         }
-        .flex-row-centered {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 1rem;
-        }
         .exit-full-screen-btn {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 1000;
-            padding: 1rem 1.5rem;
-            font-size: 1.25rem;
+            bottom: 30px;
+            right: 30px;
+            z-index: 9999;
+            padding: 15px 20px;
+            font-size: 1.1rem;
             font-weight: bold;
             color: white;
-            background-color: rgba(220, 38, 38, 0.8);
-            border-radius: 9999px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            background-color: rgba(220, 38, 38, 0.9);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
             cursor: pointer;
-            display: none; /* 預設隱藏 */
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
+            opacity: 0;
+            visibility: hidden;
+            transform: scale(0.8);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        .exit-full-screen-btn.show {
+            opacity: 1;
+            visibility: visible;
+            transform: scale(1);
         }
         .exit-full-screen-btn:hover {
-            background-color: rgba(185, 28, 28, 0.8);
+            background-color: rgba(185, 28, 28, 0.9);
+            transform: scale(1.05);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+        }
+        .exit-full-screen-btn:active {
+            transform: scale(0.95);
         }
     </style>
 </head>
@@ -234,7 +248,7 @@
             </div>
         </div>
 
-        <button id="fullScreenBtn" class="full-screen-btn p-3 rounded-lg w-full">
+        <button id="fullScreenBtn" class="full-screen-btn w-full">
             <i class="fas fa-expand"></i> 全螢幕
         </button>
 
@@ -244,7 +258,7 @@
         <p class="text-center text-gray-500 mt-4"><a href="https://www.facebook.com/profile.php?id=61581058777400" target="_blank" class="text-blue-500 hover:text-blue-700 transition duration-300">@DigitalxKiddo</a></p>
     </div>
     
-    <!-- 新增的退出全螢幕按鈕 -->
+    <!-- 退出全螢幕按鈕 -->
     <button id="exitFullScreenBtn" class="exit-full-screen-btn">
         <i class="fas fa-times-circle"></i> 退出全螢幕
     </button>
@@ -266,9 +280,9 @@
             // 處理語音輸入
             if ('webkitSpeechRecognition' in window) {
                 const recognition = new webkitSpeechRecognition();
-                recognition.continuous = false; // 語音辨識一次後就停止
-                recognition.lang = 'zh-TW'; // 設置語言為繁體中文
-                recognition.interimResults = true; // 不顯示中途結果
+                recognition.continuous = false;
+                recognition.lang = 'zh-TW';
+                recognition.interimResults = true;
 
                 speechInputBtn.addEventListener('click', () => {
                     speechInputBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 請說話...';
@@ -305,46 +319,36 @@
                 if (content === '') {
                     marqueeText.textContent = '請輸入文字';
                 } else {
-                    // 為了連續顯示，將文字重複兩次並加入間隔
                     marqueeText.textContent = content + '　' + content;
                 }
 
-                // 根據全螢幕狀態來設定文字大小
                 const size = sizeSlider.value;
                 if (document.fullscreenElement) {
-                    marqueeText.style.fontSize = `${size * 5}vh`; // 全螢幕時使用vh單位
+                    marqueeText.style.fontSize = `${size * 5}vh`;
                 } else {
-                    marqueeText.style.fontSize = `${size}rem`; // 正常模式下使用rem單位
+                    marqueeText.style.fontSize = `${size}rem`;
                 }
 
-                // 使用 setTimeout 確保瀏覽器完成尺寸計算後再執行動畫重啟
                 setTimeout(() => {
-                    // 移除現有的動畫屬性
                     marqueeText.style.animation = 'none';
                     
-                    // 顯式地將文字位置設定到最右側，確保立即重置
                     if (document.fullscreenElement) {
-                        marqueeText.style.transform = 'translateX(80%)';
+                        marqueeText.style.transform = 'translateX(100%)';
                     } else {
                         marqueeText.style.transform = 'translateX(100%)';
                     }
 
-                    // 強制瀏覽器重繪，以確保位置已經更新
                     marqueeText.offsetHeight;
                     
-                    // 獲取跑馬燈文字的實際寬度
                     const textWidth = marqueeText.scrollWidth;
                     const speed = speedSlider.value;
                     const containerWidth = marqueeContainer.offsetWidth;
-                    // 計算動畫總行程，為容器寬度加上文字寬度
                     const totalDistance = containerWidth + textWidth;
-                    // 根據全螢幕狀態調整速度，確保體感速度一致
                     const speedMultiplier = document.fullscreenElement ? (speed * 10 * 1.5) : (speed * 10);
                     const animationDuration = totalDistance / speedMultiplier;
                     
-                    // 應用新的動畫屬性，確保從頭播放
                     marqueeText.style.animation = `marquee-animation ${animationDuration}s linear infinite`;
-                }, 0);
+                }, 50);
             };
 
             // 處理文字輸入
@@ -366,7 +370,7 @@
             // 處理文字大小調整
             sizeSlider.addEventListener('input', updateMarquee);
             
-            // 監聽視窗大小改變，重新計算跑馬燈動畫
+            // 監聽視窗大小改變
             window.addEventListener('resize', updateMarquee);
 
             // 處理全螢幕功能
@@ -375,8 +379,6 @@
                     marqueeContainer.requestFullscreen().catch(err => {
                         console.error(`Error attempting to enable fullscreen: ${err.message} (${err.name})`);
                     });
-                } else {
-                    document.exitFullscreen();
                 }
             });
 
@@ -386,15 +388,20 @@
                     // 進入全螢幕模式
                     appContainer.classList.add('full-screen-hidden');
                     marqueeContainer.classList.add('full-screen');
-                    exitFullScreenBtn.style.display = 'block'; // 直接顯示退出按鈕
+                    
+                    // 延遲顯示退出按鈕，確保動畫順暢
+                    setTimeout(() => {
+                        exitFullScreenBtn.classList.add('show');
+                    }, 100);
                 } else {
                     // 退出全螢幕模式
+                    exitFullScreenBtn.classList.remove('show');
                     appContainer.classList.remove('full-screen-hidden');
                     marqueeContainer.classList.remove('full-screen');
-                    exitFullScreenBtn.style.display = 'none'; // 直接隱藏退出按鈕
                 }
-                // 在全螢幕狀態改變後立即更新跑馬燈，確保無延遲
-                updateMarquee();
+                
+                // 更新跑馬燈
+                setTimeout(updateMarquee, 100);
             });
 
             // 退出全螢幕按鈕的點擊事件
@@ -403,7 +410,15 @@
                     document.exitFullscreen();
                 }
             });
-            // 初始載入時，更新跑馬燈
+
+            // ESC 鍵退出全螢幕
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && document.fullscreenElement) {
+                    document.exitFullscreen();
+                }
+            });
+
+            // 初始載入時更新跑馬燈
             updateMarquee();
         });
     </script>
