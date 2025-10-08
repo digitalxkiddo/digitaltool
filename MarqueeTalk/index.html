@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>文字跑馬燈</title>
+    <title>全螢幕跑馬燈</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
@@ -17,9 +17,9 @@
             align-items: center;
             min-height: 100vh;
             padding: 1rem;
-            transition: background-color 0.5s ease-in-out;
         }
-        .container {
+        /* 應用程式主控制面板，在全螢幕播放時隱藏 */
+        .control-panel {
             width: 100%;
             max-width: 800px;
             padding: 2rem;
@@ -31,10 +31,13 @@
             gap: 2rem;
             transition: transform 0.3s ease, opacity 0.3s ease;
         }
-        .container.full-screen-hidden {
-            transform: scale(0);
+        .control-panel.full-screen-hidden {
+            transform: scale(0.9);
             opacity: 0;
             pointer-events: none;
+            /* 讓它在全螢幕時不會遮擋後面的顯示區 */
+            position: absolute; 
+            z-index: 1;
         }
         .section {
             display: flex;
@@ -60,36 +63,7 @@
             font-size: 1rem;
             resize: none;
         }
-        .color-picker-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            justify-content: center;
-            align-items: center;
-        }
-        .color-picker-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        input[type="color"] {
-            width: 60px;
-            height: 36px;
-            border-radius: 6px;
-            border: 1px solid #cbd5e0;
-        }
-        .slider-container {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-        .slider-label {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.875rem;
-            color: #4a5568;
-        }
+        /* 跑馬燈顯示區 (預設為預覽框) */
         .marquee-container {
             width: 100%;
             height: 200px;
@@ -103,6 +77,7 @@
             position: relative;
             transition: all 0.3s ease;
         }
+        /* 進入全螢幕模式的樣式 */
         .marquee-container.full-screen {
             position: fixed;
             top: 0;
@@ -119,96 +94,42 @@
             white-space: nowrap;
             display: inline-block;
             animation-name: marquee-animation;
-            /* 每次只執行一次，由 JS 控制循環 */
             animation-iteration-count: 1; 
             animation-timing-function: linear;
             font-size: 4rem;
             font-weight: bold;
-            line-height: 200px;
+            line-height: 200px; /* 預設行高 */
             color: #3182ce;
-            transition: font-size 0.3s ease;
+            transition: none !important; /* 禁用所有 CSS 過渡，確保瞬間跳轉 */
         }
-        .button-group {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-        }
-        .button-group button {
-            background-color: #38b2ac;
-            color: white;
-            border: none;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            padding: 12px 20px;
-            border-radius: 8px;
-            font-weight: bold;
-        }
-        .button-group button:hover {
-            background-color: #319795;
-        }
-        .speech-button {
-            background-color: #4a90e2;
-            color: white;
-            border: none;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            padding: 0.75rem 1rem;
-            font-size: 0.875rem;
-            border-radius: 0.5rem;
-        }
-        .speech-button:hover {
-            background-color: #357bd8;
-        }
-        .speech-button:disabled {
-            background-color: #a0aec0;
-            cursor: not-allowed;
-        }
-        .exit-full-screen-btn {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            z-index: 9999;
-            padding: 15px 20px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            color: white;
-            background-color: rgba(220, 38, 38, 0.9);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50px;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
-            cursor: pointer;
+
+        /* 全螢幕時的退出指示 */
+        .exit-instruction {
+            position: absolute;
+            bottom: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 1.2rem;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+            pointer-events: none; 
+            z-index: 10;
             opacity: 0;
-            visibility: hidden;
-            transform: scale(0.8);
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+            transition: opacity 0.5s;
         }
-        .exit-full-screen-btn.show {
+        .exit-instruction.show {
             opacity: 1;
-            visibility: visible;
-            transform: scale(1);
-        }
-        .exit-full-screen-btn:hover {
-            background-color: rgba(185, 28, 28, 0.9);
-            transform: scale(1.05);
-            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
-        }
-        .exit-full-screen-btn:active {
-            transform: scale(0.95);
         }
 
         /* 跑馬燈動畫定義，使用 CSS 變數 */
         @keyframes marquee-animation {
-            /* 起點: 總是從右側容器寬度的位置開始 */
-            from { transform: translateX(var(--container-width)); }
-            /* 終點: 讓文本完全消失在左側，並增加 50px 緩衝 */
+            from { transform: translateX(calc(var(--container-width) + 50px)); }
             to { transform: translateX(calc(-1 * var(--text-width) - 50px)); } 
         }
     </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center p-6 min-h-screen">
-    <div class="container bg-white rounded-xl shadow-lg p-8" id="app-container">
+    <div class="control-panel bg-white rounded-xl shadow-lg p-8" id="app-container">
         <h1 class="text-3xl font-bold text-center text-gray-800">文字跑馬燈</h1>
 
         <!-- 文字與語音輸入區 -->
@@ -218,7 +139,7 @@
                 <textarea id="textInput" placeholder="在此輸入文字..." class="input-text flex-grow"></textarea>
             </div>
             <div class="flex items-start gap-2">
-                <button id="speechInputBtn" class="speech-button flex-shrink-0">
+                <button id="speechInputBtn" class="bg-blue-400 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-lg text-sm flex-shrink-0">
                     <i class="fas fa-microphone"></i> 語音輸入
                 </button>
             </div>
@@ -230,23 +151,17 @@
             <div class="slider-container">
                 <label for="speedSlider" class="text-lg font-semibold text-gray-700">速度:</label>
                 <input type="range" id="speedSlider" min="5" max="40" value="20" class="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer">
-                <div class="slider-label">
-                    <span>慢 </span>
-                    <span>快 </span>
-                </div>
+                <div class="slider-label"><span>慢</span><span>快</span></div>
             </div>
 
             <!-- 文字大小調整 -->
             <div class="slider-container">
                 <label for="sizeSlider" class="text-lg font-semibold text-gray-700">文字大小:</label>
                 <input type="range" id="sizeSlider" min="1" max="6" value="4" class="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer">
-                <div class="slider-label">
-                    <span>小</span>
-                    <span>大 </span>
-                </div>
+                <div class="slider-label"><span>小</span><span>大</span></div>
             </div>
 
-            <!-- 文字顏色與背景顏色選擇 -->
+            <!-- 顏色選擇 -->
             <div class="color-picker-group col-span-full justify-center">
                 <div class="color-picker-wrapper">
                     <label for="colorPicker" class="text-sm font-semibold text-gray-700">文字顏色：</label>
@@ -259,24 +174,22 @@
             </div>
         </div>
 
+        <!-- 播放/停止按鈕 (現為全螢幕啟動按鈕) -->
         <div class="button-group">
-            <button id="playPauseBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300">
-                <i class="fas fa-play"></i> 播放
-            </button>
-            <button id="fullScreenBtn" class="bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300">
-                <i class="fas fa-expand"></i> 全螢幕
+            <button id="playPauseBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-xl transition duration-300 w-full md:w-auto">
+                <i class="fas fa-expand"></i> 全螢幕播放
             </button>
         </div>
 
+        <!-- 預覽區域 -->
         <div class="marquee-container" id="marquee-container">
             <div class="marquee" id="marqueeText" style="animation-play-state: paused;"></div>
+            <!-- 全螢幕時出現的退出提示 -->
+            <div id="exitInstruction" class="exit-instruction">點擊任意位置或按下 ESC 鍵退出</div>
         </div>
-        <p class="text-center text-gray-500 mt-4"><a href="https://www.facebook.com/profile.php?id=61581058777400" target="_blank" class="text-blue-500 hover:text-blue-700 transition duration-300">@DigitalxKiddo</a></p>
+        
+        <p class="text-center text-gray-500 mt-4 text-sm">此版本已針對行動裝置性能優化</p>
     </div>
-    
-    <!-- 退出全螢幕按鈕 -->
-    <button id="exitFullScreenBtn" class="exit-full-screen-btn">
-        <i class="fas fa-times-circle"></i> 退出全螢幕</button>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -288,15 +201,15 @@
             const speedSlider = document.getElementById('speedSlider');
             const sizeSlider = document.getElementById('sizeSlider');
             const playPauseBtn = document.getElementById('playPauseBtn');
-            const fullScreenBtn = document.getElementById('fullScreenBtn');
-            const exitFullScreenBtn = document.getElementById('exitFullScreenBtn');
             const marqueeContainer = document.getElementById('marquee-container');
             const marqueeText = document.getElementById('marqueeText');
+            const exitInstruction = document.getElementById('exitInstruction');
             
             let isPlaying = false;
-            let currentTimeout = null; // 用於儲存 setTimeout ID，以便清除
+            let currentTimeout = null; 
+            const BUFFER = 50; // 邊緣緩衝距離 (px)
 
-            // --- 語音輸入處理 (省略) ---
+            // --- 語音輸入處理 (略) ---
             if ('webkitSpeechRecognition' in window) {
                 const recognition = new webkitSpeechRecognition();
                 recognition.continuous = false;
@@ -327,41 +240,56 @@
                 speechInputBtn.disabled = true;
             }
 
+            // 更新播放按鈕的文字和顏色
+            const updatePlayButton = () => {
+                if (isPlaying) {
+                    playPauseBtn.innerHTML = '<i class="fas fa-stop"></i> 退出並停止';
+                    playPauseBtn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+                    playPauseBtn.classList.add('bg-red-500', 'hover:bg-red-600');
+                } else {
+                    playPauseBtn.innerHTML = '<i class="fas fa-expand"></i> 進入全螢幕播放';
+                    playPauseBtn.classList.remove('bg-red-500', 'hover:bg-red-600');
+                    playPauseBtn.classList.add('bg-blue-500');
+                }
+            };
+
             // 應用文字大小設定
             const applySize = () => {
                 const size = sizeSlider.value;
+                // 全螢幕時使用 vh (視窗高度百分比)，非全螢幕時使用 rem
                 if (document.fullscreenElement) {
-                    // 全螢幕時使用 vh (視窗高度百分比)
                     marqueeText.style.fontSize = `${size * 5}vh`;
+                    marqueeText.style.lineHeight = '100vh'; // 讓文字垂直置中
                 } else {
                     marqueeText.style.fontSize = `${size}rem`;
+                    marqueeText.style.lineHeight = '200px'; // 預覽框高度
                 }
             };
-            
-            // 停止所有活動和動畫
+
+            // 停止所有活動和動畫，並將文字定位到最右側邊緣外
             const resetMarquee = () => {
                 isPlaying = false;
-                playPauseBtn.innerHTML = '<i class="fas fa-play"></i> 播放';
+                updatePlayButton();
                 
-                // 清除強制重啟的定時器
                 if (currentTimeout) {
                     clearTimeout(currentTimeout);
                     currentTimeout = null;
                 }
                 
-                // 重置動畫狀態
                 marqueeText.style.animation = 'none';
                 marqueeText.style.animationPlayState = 'paused';
                 
-                // 確保文字停留在容器右側邊緣外 (使用 50px 緩衝)
-                marqueeText.style.transform = `translateX(${marqueeContainer.offsetWidth + 50}px)`; 
+                // 強制定位到容器右側邊緣外
+                const containerWidth = marqueeContainer.offsetWidth;
+                marqueeText.style.transform = `translateX(${containerWidth + BUFFER}px)`; 
+                
+                marqueeText.offsetWidth; // 強制 Reflow
             };
             
             /**
              * 啟動跑馬燈動畫：計算所需時間並設定強制重啟定時器
-             * @param {boolean} isManualTrigger - 是否為手動點擊播放按鈕 (非循環重啟)
              */
-            const startMarquee = (isManualTrigger = false) => {
+            const startMarquee = () => {
                 const content = textInput.value.trim();
                 if (content === '') {
                     marqueeText.textContent = '';
@@ -370,84 +298,79 @@
                 }
 
                 isPlaying = true;
-                playPauseBtn.innerHTML = '<i class="fa-solid fa-stop"></i> 停止';
+                updatePlayButton();
                 marqueeText.textContent = content;
                 applySize();
                 
-                // 1. 強制停止舊動畫並重置 transform 到起點
+                // 1. 強制停止舊動畫並清除計時器
+                if (currentTimeout) clearTimeout(currentTimeout);
+                currentTimeout = null;
                 marqueeText.style.animation = 'none';
                 
-                // 2. 瞬間將文字定位到螢幕右側邊界外 (使用 50px 緩衝)
-                // 獲取當前容器寬度 (無論是否全螢幕，這裡都會拿到當前的實際寬度)
-                const currentContainerWidth = marqueeContainer.offsetWidth; 
-                marqueeText.style.transform = `translateX(${currentContainerWidth + 50}px)`; 
-                
-                // 3. 強制瀏覽器重繪 (Reflow)，使 transform 立即生效
-                marqueeText.offsetWidth; 
-
-                // --- 核心計算與動畫啟動 ---
-                
-                // 獲取當前文字和容器的寬度
+                // 2. 重新計算尺寸和位置
                 const textWidth = marqueeText.scrollWidth;
                 const containerWidth = marqueeContainer.offsetWidth;
                 const speed = speedSlider.value;
-                
-                // 總距離 = 容器寬度 + 文字寬度 + 緩衝距離 (50px)
-                const totalDistance = containerWidth + textWidth + 50; 
-                
-                // 速度計算：像素/秒 (Pixels Per Second)
-                const pixelsPerSecond = speed * 15; 
-                
-                // 動畫持續時間 (秒) = 總距離 / 速度
-                const animationDuration = totalDistance / pixelsPerSecond;
 
-                // 4. 設定 CSS 變數供 @keyframes 使用
-                marqueeText.style.setProperty('--container-width', `${containerWidth}px`);
-                marqueeText.style.setProperty('--text-width', `${textWidth}px`);
+                // 3. 瞬間將文字定位到計算出的起始位置
+                marqueeText.style.transform = `translateX(${containerWidth + BUFFER}px)`; 
                 
-                // 5. 啟動新的 CSS 動畫
+                // 4. 強制瀏覽器重繪 (Reflow) - 消除移動裝置上的延遲/平滑過渡
+                marqueeText.offsetWidth; 
+
+                // --- 核心計算 ---
+                const totalDistance = containerWidth + textWidth + (BUFFER * 2); // 總移動距離
+                const pixelsPerSecond = speed * 15; // 速度 (像素/秒)
+                const animationDuration = totalDistance / pixelsPerSecond; // 動畫持續時間 (秒)
+
+                // 5. 設定 CSS 變數
+                marqueeText.style.setProperty('--container-width', `${containerWidth}px`); 
+                marqueeText.style.setProperty('--text-width', `${textWidth}px`);     
+                
+                // 6. 啟動新的 CSS 動畫
                 marqueeText.style.animation = `marquee-animation ${animationDuration}s linear 1`;
                 marqueeText.style.animationPlayState = 'running';
                 
-                // 6. 設定強制重啟定時器
-                // 清除舊的定時器
-                if (currentTimeout) clearTimeout(currentTimeout);
-
-                // 在動畫結束前 50 毫秒強制重啟，以隱藏視覺跳動
+                // 7. 設定強制重啟定時器
                 const restartDelay = (animationDuration * 1000) - 50; 
                 
                 if (restartDelay > 0) {
                     currentTimeout = setTimeout(() => {
-                        // 在定時器觸發時，再次啟動跑馬燈，實現循環
-                        if (isPlaying) {
-                            startMarquee(false); 
+                        if (isPlaying && document.fullscreenElement) {
+                            // 只有在全螢幕模式下才進行循環播放
+                            startMarquee(); 
                         }
                     }, restartDelay);
-                } else {
-                    console.warn("動畫時間過短，無法設定定時器。");
                 }
             };
 
-            // 播放/暫停按鈕的點擊事件
+            // 播放/停止按鈕的點擊事件
             playPauseBtn.addEventListener('click', () => {
                 if (isPlaying) {
+                    // 停止 (退出全螢幕)
+                    if (document.fullscreenElement) {
+                        document.exitFullscreen();
+                    }
                     resetMarquee();
                 } else {
-                    startMarquee(true);
+                    // 播放 (進入全螢幕)
+                    startMarquee(); 
+                    marqueeContainer.requestFullscreen().catch(err => {
+                        console.error(`Error attempting to enable fullscreen: ${err.message} (${err.name})`);
+                    });
                 }
             });
 
-            // 處理速度調整、大小調整和文字輸入的事件處理器
+            // 處理設定調整的事件處理器
             const handleSettingChange = () => {
+                // 播放中調整設定時，給予微小延遲確保 UI 尺寸改變已套用，然後立即重啟
                 if (isPlaying) {
-                    // 設置一個微小的延遲，確保 UI 尺寸改變已套用
-                    setTimeout(() => startMarquee(false), 50); 
-                } else if (event.target.id === 'textInput' || event.target.id === 'sizeSlider') {
-                    // 非播放狀態時，若設定改變，需更新內容和位置
+                    setTimeout(() => startMarquee(), 50); 
+                } else {
+                    // 非播放狀態時，更新內容和位置
                     marqueeText.textContent = textInput.value.trim() || '';
                     applySize();
-                    // 確保文字停留在容器右側邊緣外
-                    marqueeText.style.transform = `translateX(${marqueeContainer.offsetWidth + 50}px)`; 
+                    resetMarquee(); // 確保位置更新
                 }
             };
             
@@ -456,61 +379,51 @@
             sizeSlider.addEventListener('input', handleSettingChange);
             
             // 顏色與背景顏色處理
-            colorPicker.addEventListener('input', (e) => { marqueeText.style.color = e.target.value; });
-            bgColorPicker.addEventListener('input', (e) => { marqueeContainer.style.backgroundColor = e.target.value; });
-
-            // 監聽視窗大小改變：重新計算位置和時間，並重啟動畫
-            window.addEventListener('resize', () => {
-                if (isPlaying) {
-                    applySize(); 
-                    startMarquee(false); 
+            colorPicker.addEventListener('input', (e) => { 
+                marqueeText.style.color = e.target.value; 
+                // 更新全螢幕背景色
+                if (document.fullscreenElement) {
+                    marqueeContainer.style.backgroundColor = e.target.value;
                 }
             });
-
-            // --- 全螢幕功能處理 (重點修正處) ---
-            fullScreenBtn.addEventListener('click', () => {
-                if (!document.fullscreenElement) {
-                    marqueeContainer.requestFullscreen().catch(err => {
-                        console.error(`Error attempting to enable fullscreen: ${err.message} (${err.name})`);
-                    });
-                }
+            bgColorPicker.addEventListener('input', (e) => { 
+                marqueeContainer.style.backgroundColor = e.target.value; 
             });
 
+
+            // --- 全螢幕事件監聽 ---
             document.addEventListener('fullscreenchange', () => {
                 if (document.fullscreenElement) {
+                    // 進入全螢幕: 隱藏控制面板, 啟用全螢幕樣式, 顯示退出提示
                     appContainer.classList.add('full-screen-hidden');
                     marqueeContainer.classList.add('full-screen');
-                    setTimeout(() => { exitFullScreenBtn.classList.add('show'); }, 100);
+                    exitInstruction.classList.add('show');
                     
-                    if(isPlaying) {
-                        // **修正步驟 1：立即清除舊的定時器**
-                        if (currentTimeout) clearTimeout(currentTimeout);
-                        currentTimeout = null;
-                        
-                        // **修正步驟 2：增加延遲到 200ms**
-                        // 確保瀏覽器有足夠時間套用 100vw/100vh 樣式後，再進行 startMarquee 的尺寸計算。
-                        setTimeout(() => startMarquee(false), 200); 
-                    } else {
-                        applySize();
+                    // 確保文字行高與全螢幕尺寸匹配
+                    applySize(); 
+
+                    // 增加延遲到 200ms，確保瀏覽器完成全螢幕模式的視圖計算後才啟動動畫
+                    if (isPlaying) {
+                         setTimeout(() => startMarquee(), 200); 
                     }
+                    
                 } else {
-                    exitFullScreenBtn.classList.remove('show');
+                    // 退出全螢幕: 顯示控制面板, 禁用全螢幕樣式, 隱藏退出提示
+                    exitInstruction.classList.remove('show');
                     appContainer.classList.remove('full-screen-hidden');
                     marqueeContainer.classList.remove('full-screen');
                     
+                    // 確保文字行高恢復預覽框尺寸
+                    applySize(); 
+
+                    // 若使用者透過 ESC 或系統手勢退出，則重設內部播放狀態
                     resetMarquee();
-                    applySize();
                 }
             });
-
-            exitFullScreenBtn.addEventListener('click', () => {
+            
+            // 手機使用者點擊螢幕退出全螢幕
+            marqueeContainer.addEventListener('click', () => {
                 if (document.fullscreenElement) {
-                    document.exitFullscreen();
-                }
-            });
-
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && document.fullscreenElement) {
                     document.exitFullscreen();
                 }
             });
@@ -523,4 +436,3 @@
     </script>
 </body>
 </html>
-
