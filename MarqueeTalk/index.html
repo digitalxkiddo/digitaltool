@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>文字跑馬燈</title>
+    <title>文字跑馬燈 - 強制重啟循環版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
@@ -119,7 +119,8 @@
             white-space: nowrap;
             display: inline-block;
             animation-name: marquee-animation;
-            animation-iteration-count: infinite;
+            /* 每次只執行一次，由 JS 控制循環 */
+            animation-iteration-count: 1; 
             animation-timing-function: linear;
             font-size: 4rem;
             font-weight: bold;
@@ -127,20 +128,22 @@
             color: #3182ce;
             transition: font-size 0.3s ease;
         }
-        @keyframes marquee-animation {
-            from { transform: translateX(100%); }
-            to { transform: translateX(-100%); }
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
         }
-        .full-screen-btn {
+        .button-group button {
             background-color: #38b2ac;
             color: white;
             border: none;
             cursor: pointer;
             transition: background-color 0.3s;
-            padding: 12px;
+            padding: 12px 20px;
             border-radius: 8px;
+            font-weight: bold;
         }
-        .full-screen-btn:hover {
+        .button-group button:hover {
             background-color: #319795;
         }
         .speech-button {
@@ -194,6 +197,14 @@
         .exit-full-screen-btn:active {
             transform: scale(0.95);
         }
+
+        /* 跑馬燈動畫定義，使用 CSS 變數 */
+        @keyframes marquee-animation {
+            /* 起點: 總是從右側容器寬度的位置開始 */
+            from { transform: translateX(var(--container-width)); }
+            /* 終點: 讓文本完全消失在左側，並增加 50px 緩衝 */
+            to { transform: translateX(calc(-1 * var(--text-width) - 50px)); } 
+        }
     </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center p-6 min-h-screen">
@@ -204,7 +215,7 @@
         <div class="section">
             <label for="textInput" class="text-lg font-semibold text-gray-700">輸入要顯示的文字：</label>
             <div class="flex items-start gap-2">
-                <textarea id="textInput" placeholder="在此輸入文字..." class="input-text flex-grow"></textarea>
+                <textarea id="textInput" placeholder="在此輸入文字..." class="input-text flex-grow">請在此輸入文字...</textarea>
             </div>
             <div class="flex items-start gap-2">
                 <button id="speechInputBtn" class="speech-button flex-shrink-0">
@@ -220,18 +231,18 @@
                 <label for="speedSlider" class="text-lg font-semibold text-gray-700">速度:</label>
                 <input type="range" id="speedSlider" min="5" max="40" value="20" class="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer">
                 <div class="slider-label">
-                    <span>慢</span>
-                    <span>快</span>
+                    <span>慢 (5)</span>
+                    <span>快 </span>
                 </div>
             </div>
 
             <!-- 文字大小調整 -->
             <div class="slider-container">
                 <label for="sizeSlider" class="text-lg font-semibold text-gray-700">文字大小:</label>
-                <input type="range" id="sizeSlider" min="1" max="10" value="4" class="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer">
+                <input type="range" id="sizeSlider" min="1" max="6" value="4" class="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer">
                 <div class="slider-label">
                     <span>小</span>
-                    <span>大</span>
+                    <span>大 </span>
                 </div>
             </div>
 
@@ -248,20 +259,24 @@
             </div>
         </div>
 
-        <button id="fullScreenBtn" class="full-screen-btn w-full">
-            <i class="fas fa-expand"></i> 全螢幕
-        </button>
+        <div class="button-group">
+            <button id="playPauseBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300">
+                <i class="fas fa-play"></i> 播放
+            </button>
+            <button id="fullScreenBtn" class="bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300">
+                <i class="fas fa-expand"></i> 全螢幕
+            </button>
+        </div>
 
         <div class="marquee-container" id="marquee-container">
-            <div class="marquee" id="marqueeText">請輸入文字</div>
+            <div class="marquee" id="marqueeText" style="animation-play-state: paused;"></div>
         </div>
         <p class="text-center text-gray-500 mt-4"><a href="https://www.facebook.com/profile.php?id=61581058777400" target="_blank" class="text-blue-500 hover:text-blue-700 transition duration-300">@DigitalxKiddo</a></p>
     </div>
     
     <!-- 退出全螢幕按鈕 -->
     <button id="exitFullScreenBtn" class="exit-full-screen-btn">
-        <i class="fas fa-times-circle"></i> 退出全螢幕
-    </button>
+        <i class="fas fa-times-circle"></i> 退出全螢幕</button>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -272,18 +287,27 @@
             const bgColorPicker = document.getElementById('bgColorPicker');
             const speedSlider = document.getElementById('speedSlider');
             const sizeSlider = document.getElementById('sizeSlider');
+            const playPauseBtn = document.getElementById('playPauseBtn');
             const fullScreenBtn = document.getElementById('fullScreenBtn');
             const exitFullScreenBtn = document.getElementById('exitFullScreenBtn');
             const marqueeContainer = document.getElementById('marquee-container');
             const marqueeText = document.getElementById('marqueeText');
+            
+            let isPlaying = false;
+            let currentTimeout = null; // 用於儲存 setTimeout ID，以便清除
 
-            // 處理語音輸入
+            // --- 語音輸入處理 (省略) ---
             if ('webkitSpeechRecognition' in window) {
                 const recognition = new webkitSpeechRecognition();
                 recognition.continuous = false;
                 recognition.lang = 'zh-TW';
                 recognition.interimResults = true;
 
+                const resetSpeechButton = () => {
+                    speechInputBtn.innerHTML = '<i class="fas fa-microphone"></i> 語音輸入';
+                    speechInputBtn.disabled = false;
+                }
+                
                 speechInputBtn.addEventListener('click', () => {
                     speechInputBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 請說話...';
                     speechInputBtn.disabled = true;
@@ -293,86 +317,157 @@
                 recognition.onresult = (event) => {
                     const transcript = event.results[0][0].transcript;
                     textInput.value = transcript;
-                    updateMarquee();
-                    speechInputBtn.innerHTML = '<i class="fas fa-microphone"></i> 語音輸入';
-                    speechInputBtn.disabled = false;
+                    if(isPlaying) startMarquee();
                 };
 
-                recognition.onerror = (event) => {
-                    console.error('Speech recognition error', event.error);
-                    speechInputBtn.innerHTML = '<i class="fas fa-microphone"></i> 語音輸入';
-                    speechInputBtn.disabled = false;
-                };
-
-                recognition.onend = () => {
-                    speechInputBtn.innerHTML = '<i class="fas fa-microphone"></i> 語音輸入';
-                    speechInputBtn.disabled = false;
-                };
+                recognition.onerror = resetSpeechButton;
+                recognition.onend = resetSpeechButton;
             } else {
                 speechInputBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> 瀏覽器不支援語音輸入';
                 speechInputBtn.disabled = true;
             }
 
-            // 更新跑馬燈文字、大小和動畫的單一函數
-            const updateMarquee = () => {
-                const content = textInput.value.trim();
-                if (content === '') {
-                    marqueeText.textContent = '請輸入文字';
-                } else {
-                    marqueeText.textContent = content + '　' + content;
-                }
-
+            // 應用文字大小設定
+            const applySize = () => {
                 const size = sizeSlider.value;
                 if (document.fullscreenElement) {
+                    // 全螢幕時使用 vh (視窗高度百分比)
                     marqueeText.style.fontSize = `${size * 5}vh`;
                 } else {
                     marqueeText.style.fontSize = `${size}rem`;
                 }
+            };
+            
+            // 停止所有活動和動畫
+            const resetMarquee = () => {
+                isPlaying = false;
+                playPauseBtn.innerHTML = '<i class="fas fa-play"></i> 播放';
+                
+                // 清除強制重啟的定時器
+                if (currentTimeout) {
+                    clearTimeout(currentTimeout);
+                    currentTimeout = null;
+                }
+                
+                // 重置動畫狀態
+                marqueeText.style.animation = 'none';
+                marqueeText.style.animationPlayState = 'paused';
+                
+                // 確保文字停留在容器右側邊緣外 (使用 50px 緩衝)
+                marqueeText.style.transform = `translateX(${marqueeContainer.offsetWidth + 50}px)`; 
+            };
+            
+            /**
+             * 啟動跑馬燈動畫：計算所需時間並設定強制重啟定時器
+             * @param {boolean} isManualTrigger - 是否為手動點擊播放按鈕 (非循環重啟)
+             */
+            const startMarquee = (isManualTrigger = false) => {
+                const content = textInput.value.trim();
+                if (content === '') {
+                    marqueeText.textContent = '';
+                    resetMarquee();
+                    return;
+                }
 
-                setTimeout(() => {
-                    marqueeText.style.animation = 'none';
-                    marqueeText.style.transform = 'translateX(100%)';
-                    marqueeText.offsetHeight;
-                    
-                    const speed = speedSlider.value;
-                    
-                    // 固定的視覺速度：每秒移動多少個螢幕寬度的百分比
-                    // 這樣確保在不同寬度下，視覺速度感受相同
-                    const screenPercentPerSecond = speed * 0.8; // 每秒移動螢幕寬度的百分比
-                    
-                    // 文字從右邊100%移動到左邊-100%，總共移動200%的螢幕寬度
-                    const totalScreenPercent = 200;
-                    
-                    // 根據固定的視覺速度計算動畫時間
-                    const animationDuration = totalScreenPercent / screenPercentPerSecond;
-                    
-                    marqueeText.style.animation = `marquee-animation ${animationDuration}s linear infinite`;
-                }, 50);
+                isPlaying = true;
+                playPauseBtn.innerHTML = '<i class="fas fa-pause"></i> 停止';
+                marqueeText.textContent = content;
+                applySize();
+                
+                // 1. 強制停止舊動畫並重置 transform 到起點
+                marqueeText.style.animation = 'none';
+                
+                // 2. 瞬間將文字定位到螢幕右側邊界外 (使用 50px 緩衝)
+                // 獲取當前容器寬度 (無論是否全螢幕，這裡都會拿到當前的實際寬度)
+                const currentContainerWidth = marqueeContainer.offsetWidth; 
+                marqueeText.style.transform = `translateX(${currentContainerWidth + 50}px)`; 
+                
+                // 3. 強制瀏覽器重繪 (Reflow)，使 transform 立即生效
+                marqueeText.offsetWidth; 
+
+                // --- 核心計算與動畫啟動 ---
+                
+                // 獲取當前文字和容器的寬度
+                const textWidth = marqueeText.scrollWidth;
+                const containerWidth = marqueeContainer.offsetWidth;
+                const speed = speedSlider.value;
+                
+                // 總距離 = 容器寬度 + 文字寬度 + 緩衝距離 (50px)
+                const totalDistance = containerWidth + textWidth + 50; 
+                
+                // 速度計算：像素/秒 (Pixels Per Second)
+                const pixelsPerSecond = speed * 15; 
+                
+                // 動畫持續時間 (秒) = 總距離 / 速度
+                const animationDuration = totalDistance / pixelsPerSecond;
+
+                // 4. 設定 CSS 變數供 @keyframes 使用
+                marqueeText.style.setProperty('--container-width', `${containerWidth}px`);
+                marqueeText.style.setProperty('--text-width', `${textWidth}px`);
+                
+                // 5. 啟動新的 CSS 動畫
+                marqueeText.style.animation = `marquee-animation ${animationDuration}s linear 1`;
+                marqueeText.style.animationPlayState = 'running';
+                
+                // 6. 設定強制重啟定時器
+                // 清除舊的定時器
+                if (currentTimeout) clearTimeout(currentTimeout);
+
+                // 在動畫結束前 50 毫秒強制重啟，以隱藏視覺跳動
+                const restartDelay = (animationDuration * 1000) - 50; 
+                
+                if (restartDelay > 0) {
+                    currentTimeout = setTimeout(() => {
+                        // 在定時器觸發時，再次啟動跑馬燈，實現循環
+                        if (isPlaying) {
+                            startMarquee(false); 
+                        }
+                    }, restartDelay);
+                } else {
+                    console.warn("動畫時間過短，無法設定定時器。");
+                }
             };
 
-            // 處理文字輸入
-            textInput.addEventListener('input', updateMarquee);
-
-            // 處理文字顏色
-            colorPicker.addEventListener('input', (e) => {
-                marqueeText.style.color = e.target.value;
+            // 播放/暫停按鈕的點擊事件
+            playPauseBtn.addEventListener('click', () => {
+                if (isPlaying) {
+                    resetMarquee();
+                } else {
+                    startMarquee(true);
+                }
             });
 
-            // 處理背景顏色
-            bgColorPicker.addEventListener('input', (e) => {
-                marqueeContainer.style.backgroundColor = e.target.value;
-            });
-
-            // 處理速度調整
-            speedSlider.addEventListener('input', updateMarquee);
-
-            // 處理文字大小調整
-            sizeSlider.addEventListener('input', updateMarquee);
+            // 處理速度調整、大小調整和文字輸入的事件處理器
+            const handleSettingChange = () => {
+                if (isPlaying) {
+                    // 設置一個微小的延遲，確保 UI 尺寸改變已套用
+                    setTimeout(() => startMarquee(false), 50); 
+                } else if (event.target.id === 'textInput' || event.target.id === 'sizeSlider') {
+                    // 非播放狀態時，若設定改變，需更新內容和位置
+                    marqueeText.textContent = textInput.value.trim() || '';
+                    applySize();
+                    // 確保文字停留在容器右側邊緣外
+                    marqueeText.style.transform = `translateX(${marqueeContainer.offsetWidth + 50}px)`; 
+                }
+            };
             
-            // 監聽視窗大小改變
-            window.addEventListener('resize', updateMarquee);
+            textInput.addEventListener('input', handleSettingChange);
+            speedSlider.addEventListener('input', handleSettingChange);
+            sizeSlider.addEventListener('input', handleSettingChange);
+            
+            // 顏色與背景顏色處理
+            colorPicker.addEventListener('input', (e) => { marqueeText.style.color = e.target.value; });
+            bgColorPicker.addEventListener('input', (e) => { marqueeContainer.style.backgroundColor = e.target.value; });
 
-            // 處理全螢幕功能
+            // 監聽視窗大小改變：重新計算位置和時間，並重啟動畫
+            window.addEventListener('resize', () => {
+                if (isPlaying) {
+                    applySize(); 
+                    startMarquee(false); 
+                }
+            });
+
+            // --- 全螢幕功能處理 (重點修正處) ---
             fullScreenBtn.addEventListener('click', () => {
                 if (!document.fullscreenElement) {
                     marqueeContainer.requestFullscreen().catch(err => {
@@ -381,44 +476,49 @@
                 }
             });
 
-            // 監聽全螢幕狀態變化
             document.addEventListener('fullscreenchange', () => {
                 if (document.fullscreenElement) {
-                    // 進入全螢幕模式
                     appContainer.classList.add('full-screen-hidden');
                     marqueeContainer.classList.add('full-screen');
+                    setTimeout(() => { exitFullScreenBtn.classList.add('show'); }, 100);
                     
-                    // 延遲顯示退出按鈕，確保動畫順暢
-                    setTimeout(() => {
-                        exitFullScreenBtn.classList.add('show');
-                    }, 100);
+                    if(isPlaying) {
+                        // **修正步驟 1：立即清除舊的定時器**
+                        if (currentTimeout) clearTimeout(currentTimeout);
+                        currentTimeout = null;
+                        
+                        // **修正步驟 2：增加延遲到 200ms**
+                        // 確保瀏覽器有足夠時間套用 100vw/100vh 樣式後，再進行 startMarquee 的尺寸計算。
+                        setTimeout(() => startMarquee(false), 200); 
+                    } else {
+                        applySize();
+                    }
                 } else {
-                    // 退出全螢幕模式
                     exitFullScreenBtn.classList.remove('show');
                     appContainer.classList.remove('full-screen-hidden');
                     marqueeContainer.classList.remove('full-screen');
+                    
+                    resetMarquee();
+                    applySize();
                 }
-                
-                // 更新跑馬燈
-                setTimeout(updateMarquee, 100);
             });
 
-            // 退出全螢幕按鈕的點擊事件
             exitFullScreenBtn.addEventListener('click', () => {
                 if (document.fullscreenElement) {
                     document.exitFullscreen();
                 }
             });
 
-            // ESC 鍵退出全螢幕
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape' && document.fullscreenElement) {
                     document.exitFullscreen();
                 }
             });
 
-            // 初始載入時更新跑馬燈
-            updateMarquee();
+            // 初始載入
+            marqueeText.textContent = textInput.value.trim();
+            applySize();
+            resetMarquee(); 
         });
     </script>
 </body>
