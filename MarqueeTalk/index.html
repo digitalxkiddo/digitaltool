@@ -126,9 +126,12 @@
             <div class="flex items-start gap-2">
                 <textarea id="textInput" placeholder="在此輸入文字..." class="input-text flex-grow"></textarea>
             </div>
-            <div class="flex items-start gap-2">
+            <div class="flex items-center gap-2">
                 <button id="speechInputBtn" class="bg-blue-400 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-lg text-sm flex-shrink-0">
                     <i class="fas fa-microphone"></i> 語音輸入
+                </button>
+                <button id="clearTextBtn" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg text-sm flex-shrink-0">
+                    <i class="fas fa-trash-alt"></i> 清除文字
                 </button>
             </div>
         </div>
@@ -137,11 +140,11 @@
         <div class="controls-grid">
              <div>
                 <label for="speedSlider" class="text-lg font-semibold text-gray-700">速度:</label>
-                <input type="range" id="speedSlider" min="1" max="30" value="10" class="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer">
+                <input type="range" id="speedSlider" min="5" max="40" value="20" class="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer">
             </div>
             <div>
                 <label for="sizeSlider" class="text-lg font-semibold text-gray-700">文字大小:</label>
-                <input type="range" id="sizeSlider" min="1" max="12" value="6" class="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer">
+                <input type="range" id="sizeSlider" min="1" max="6" value="4" class="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer">
             </div>
             <div class="flex items-center gap-4">
                 <label for="colorPicker" class="text-lg font-semibold text-gray-700">文字顏色:</label>
@@ -175,6 +178,7 @@
             const appContainer = document.getElementById('app-container');
             const textInput = document.getElementById('textInput');
             const speechInputBtn = document.getElementById('speechInputBtn');
+            const clearTextBtn = document.getElementById('clearTextBtn'); // 新增：取得清除按鈕
             const colorPicker = document.getElementById('colorPicker');
             const bgColorPicker = document.getElementById('bgColorPicker');
             const speedSlider = document.getElementById('speedSlider');
@@ -333,6 +337,12 @@
                 }
             });
 
+            // 新增：清除按鈕的點擊事件
+            clearTextBtn.addEventListener('click', () => {
+                textInput.value = ''; // 清空輸入框
+                updatePreview(); // 更新預覽畫面
+            });
+
             document.addEventListener('fullscreenchange', () => {
                 if (document.fullscreenElement) {
                     appContainer.classList.add('full-screen-hidden');
@@ -371,5 +381,4 @@
     </script>
 </body>
 </html>
-
 
